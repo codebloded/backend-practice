@@ -1,5 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+
+
+const Dishes = require('../models/dishes');
+
 
 //Declaring the dishRouter as expressRouter
 const dishRouter = express.Router();
@@ -14,10 +19,25 @@ dishRouter.route('/')
 })
 
 .get((req,res,next)=>{
-    res.end('will give you the all information about dishes')
+    Dishes.find({}).then((dish)=>{
+        res.statusCode=200;
+        res.setHeader('Content-Type','application/json');
+        res.json(dish);
+    },(err)=>next(err))
+    .catch((err)=>next(err));
+
+    
 })
 .post((req,res,next)=>{      //POST request carry some data with the request in the form of JSON
-    res.end('Will add the dish '+req.body.name +' With details ' +req.body.description);
+    Dishes.create(req.body)
+    .then((dishes)=>{
+        console.log('Dish Created', dishes)
+        res.statusCode=200;
+        res.setHeader('Content-Type','application/json');
+        res.json(dishes);
+    },(err)=> next(err))
+    .catch((err)=>next(err));
+
 })
 
 .put((req,res, next)=>{
@@ -25,15 +45,32 @@ dishRouter.route('/')
     res.end("PUT operation is not support on the dishes");
 })
 .delete((req,res, next)=>{
-    res.end("DELETING the dishes");
-})
+    Dishes.remove({})
+    .then((resp)=>{
+        res.statusCode=200;
+        res.setHeader('Content-Type','application/json');
+        res.json(resp);
+
+    })
+},(err)=>next(err))
+
+
 
 
 //dishID endpoints
 
 dishRouter.route('/:dishId')
 .get((req,res,next)=>{
-    res.end(' will send the details of the dish ' +req.params.dishId+" to you")
+    Dishes.findById(req.params.dishId)
+    .then((dishes)=>{
+        res.statusCode=200;
+        res.setHeader('Content-Type','application/json');
+        res.json(dishes);
+    },(err)=>next(err))
+    .catch((err)=>next(err));
+
+ 
+    
 })
 .post((req,res,next)=>{      //POST request carry some data with the request in the form of JSON
     res.statusCode=403;
@@ -41,11 +78,24 @@ dishRouter.route('/:dishId')
 })
 
 .put((req,res, next)=>{
-    res.write("This is will update dish "+req.params.dishId+'\n');
-    res.end('Will update the dish: '+ req.body.name + 'With details '+req.body.description);
-})
+    Dishes.findByIdAndUpdate(req.params.dishId,{$set:req.body},{new:true})
+    .then((dish)=>{
+        res.statusCode=200;
+        res.setHeader('Content-Type','application/json');
+        res.json(dish);
+    })
+},(err)=>next(err))
+
 .delete((req,res, next)=>{
-    res.end("DELETING the dishes "+ req.params.dishId);
-});
+  Dishes.findByIdAndRemove(req.params.dishId)
+  .then((resp)=>{
+    res.statusCode=200;
+    res.setHeader('Content-Type','application/json');
+    res.json(resp);
+
+})
+},(err)=>next(err))
+
+
 
 module.exports=dishRouter;
