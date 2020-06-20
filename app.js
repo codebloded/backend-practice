@@ -42,64 +42,44 @@ app.use(session({
 
 }));
 
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
 
 function auth(req,res,next){
   console.log(req.session);
-  if(!req.signedCookies.user){
-
-    var authheader = req.headers.authorization;
-    
-    if(!authheader){
+  if(!req.session.user){
       var err = new Error('Your are not authenticated');
       res.setHeader('WWW-Authenticate','Basic');
       err.status=401;
-      next(err);
-      return;
       
-      
-    }
-    var auth = new Buffer.from(authheader.split(' ')[1], 'base64').toString().split(':');
-    var user = auth[0];
-    var password= auth[1];
-    // const userName='rohan';
-    // const pass = 'tannusingh';
-    if(user==='admin' && password==='password'){
-      res.cookie('user', 'admin',{signed:true})
-      next();  //autherization
-    }
-    else{
-      var err = new Error('You are not autherization');
-      res.setHeader('WWW-Authenticate','Basic');
-      err.status=401;
-      next(err);
-      
-    }
+      return next(err);
   }
+    
   else{
-    if(req.signedCookies.user === 'admin'){
+    if(req.session.user === 'authenticated'){
       next();
 
     }
     else{
-      var err = new Error('You are not autherization');
-      res.setHeader('WWW-Authenticate','Basic');
-      err.status=401;
-      next(err);
+      var err = new Error('You are not authenticated');
+ 
+      err.status=403;
+      return next(err);
 
     }
   }
-    
-}
+}    
+
   
-  app.use(auth);
+app.use(auth);
   
   
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+
 app.use('/dishes',dishRouter);
 app.use('/promotions',promoRouter);
 app.use('/leaders',leaderRouter);
